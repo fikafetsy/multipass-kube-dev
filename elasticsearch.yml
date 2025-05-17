@@ -1,0 +1,61 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elastic-poc
+  namespace: elastic-system
+spec:
+  version: 8.16.1
+  nodeSets:
+    - name: master-data
+      count: 3
+      config:
+        node.roles: ["master", "data"] # master+data sur ces pods
+        node.store.allow_mmap: false # désactiver mmap sous MacOS :contentReference[oaicite:0]{index=0}
+        #path.data: ["/usr/share/elasticsearch/data"]
+      podTemplate:
+        spec:
+          affinity:
+            nodeAffinity: # Node Affinity : Exécuter uniquement sur les workers étiquetés
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: elastic-node
+                        operator: In
+                        values: ["yes"]
+            podAntiAffinity: # éviter 2 master-data sur le même hôte :contentReference[oaicite:1]{index=1}
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      elasticsearch.k8s.elastic.co/cluster-name: elastic-poc
+                      elasticsearch.k8s.elastic.co/node-master: "true"
+                  topologyKey: "kubernetes.io/hostname"
+          containers:
+            - name: elasticsearch
+              resources:
+                requests:
+                  memory: "2Gi" # Heap JVM = 2 Go (50%)
+                  cpu: "1"
+                limits:
+                  memory: "4Gi"
+    - name: ingest
+      count: 1 # Un seul pod ingest
+      config:
+        node.roles: ["ingest"] # Rôle exclusif
+      podTemplate:
+        spec:
+          affinity:
+            # Exécution uniquement sur le nœud étiqueté "elastic-node=ingest"
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: ingest-node
+                        operator: In
+                        values: ["yes"]
+            # Anti-affinité : Ne PAS s'exécuter sur les nœuds master-data
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      elasticsearch.k8s.elastic.co/node-master: "true"
+                  topologyKey: "kubernetes.io/hostname"
