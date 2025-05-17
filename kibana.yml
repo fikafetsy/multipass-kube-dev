@@ -1,0 +1,20 @@
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana-poc
+  namespace: elastic-system
+spec:
+  version: 8.16.1 # Version identique à Elasticsearch
+  count: 1
+  elasticsearchRef:
+    name: elastic-poc # Doit correspondre au nom du cluster ES
+  podTemplate:
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kibana-node
+                    operator: In
+                    values: ["yes"] # Cible worker4 uniquement
