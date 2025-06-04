@@ -67,3 +67,25 @@ sometimes the kibana instance need to wait 3-5mn before the front is ready
 - diskpressure
 - pending infinitly
 - kibana
+
+## Best practices
+
+### Identifier le Service Elasticsearch
+
+Lister les services dans le namespace elastic-system
+
+```kubectl get svc -n elastic-system
+
+```
+
+- Before apply some change in your manifest, run it as client side
+
+```
+kubectl diff -f elasticsearch.yml
+kubectl apply --dry-run=client -f elasticsearch.yml # an example
+# if everything is ok
+kubectl apply -f elasticsearch.yml
+
+```
+
+- Production workload [[https://www.elastic.co/docs/deploy-manage/deploy/cloud-on-k8s/virtual-memory]], virtual memory is strongly recommended to increase the kernel setting `vm.max_map_count` to 262144

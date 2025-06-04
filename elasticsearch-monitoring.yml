@@ -3,14 +3,14 @@ apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
 metadata:
   name: monitoring-poc
-  namespace: monitoring-system
+  namespace: elastic-system
 spec:
   version: 8.16.1
   nodeSets:
-    - name: monitoring-nodes
-      count: 3
+    - name: monitoring-data
+      count: 1
       config:
-        node.roles: ["master", "data"] # Pas besoin "ingest" ici car: Aucun prétraitement de données+Les données de monitoring sont automatiquement indexées par Elasticsearch.
+        node.roles: ["master", "data", "remote_cluster_client"] # Pas besoin "ingest" ici car: Aucun prétraitement de données+Les données de monitoring sont automatiquement indexées par Elasticsearch.
         node.store.allow_mmap: false
         #xpack.monitoring.enabled: true
         # Configuration pour l'élection des master nodes
@@ -26,17 +26,16 @@ spec:
               requiredDuringSchedulingIgnoredDuringExecution:
                 nodeSelectorTerms:
                   - matchExpressions:
-                      - key: elastic-node
+                      - key: monitoring-node
                         operator: In
                         values: ["yes"]
-            podAntiAffinity: # éviter 2 master-data sur le même hôte :contentReference[oaicite:1]{index=1}
-              requiredDuringSchedulingIgnoredDuringExecution:
-                - labelSelector:
-                    matchLabels:
-                      elasticsearch.k8s.elastic.co/cluster-name: elastic-poc
-                      elasticsearch.k8s.elastic.co/node-master: "true"
-                  topologyKey: "kubernetes.io/hostname"
-          #containers:
+            #podAntiAffinity: # éviter 2 master-data sur le même hôte :contentReference[oaicite:1]{index=1}
+            #  requiredDuringSchedulingIgnoredDuringExecution:
+#  - labelSelector:
+#                   matchLabels:
+#                    elasticsearch.k8s.elastic.co/node-master: "true"
+#topologyKey: "kubernetes.io/hostname"
+#containers:
 #  - name: elasticsearch
 #              resources:
 #  requests:

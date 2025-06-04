@@ -5,12 +5,24 @@ metadata:
   namespace: elastic-system
 spec:
   version: 8.16.1
+  monitoring:
+    metrics:
+      elasticsearchRefs:
+        - name: monitoring-poc
+        - namespace: elastic-system # Cluster dédié pour les données de monitoring
+    logs:
+      elasticsearchRefs: # Active la collecte des logs
+        - name: monitoring-poc
+        - namespace: elastic-system
   nodeSets:
     - name: master-data
       count: 3
       config:
         node.roles: ["master", "data"] # master+data sur ces pods
-        node.store.allow_mmap: false # désactiver mmap sous MacOS :contentReference[oaicite:0]{index=0}
+        # désactiver mmap sous MacOS :contentReference[oaicite:0]{index=0}
+        # For production workloads, it is strongly recommended to increase the kernel
+        # setting vm.max_map_count to 262144 and leave node.store.allow_mmap unset.
+        node.store.allow_mmap: false
         #path.data: ["/usr/share/elasticsearch/data"]
       podTemplate:
         spec:

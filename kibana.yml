@@ -1,4 +1,4 @@
-apiVersion: kibana.k8s.elastic.co/v1
+\piVersion: kibana.k8s.elastic.co/v1
 kind: Kibana
 metadata:
   name: kibana-poc
@@ -7,7 +7,8 @@ spec:
   version: 8.16.1 # Version identique à Elasticsearch
   count: 1
   elasticsearchRef:
-    name: elastic-poc # Doit correspondre au nom du cluster ES
+    name: monitoring-poc
+    namespace: elastic-system # Doit correspondre au nom du cluster ES
   podTemplate:
     spec:
       affinity:
